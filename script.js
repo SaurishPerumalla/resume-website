@@ -171,8 +171,10 @@ function initContactForm() {
         body: JSON.stringify({
           name: name,
           email: email,
+          _replyto: email,
           _subject: `New Resume Inquiry: ${subject} (from ${name})`,
           message: message,
+          _autoresponse: `Hi ${name},\n\nThank you for reaching out through my resume website! This email confirms that your message has been successfully received.\n\nSummary of your message:\n• Subject: ${subject}\n• Message:\n"${message}"\n\nI will review it and get back to you shortly.\n\nBest regards,\nSaurish Perumalla\nRocky Hill, CT\nsaurish.perumalla@gmail.com`,
           _template: 'table',
           _captcha: 'false'
         })
@@ -185,9 +187,9 @@ function initContactForm() {
         if (statusBox) {
           statusBox.style.display = 'block';
           statusBox.className = 'form-status success';
-          statusBox.innerHTML = `<strong>✓ Message sent directly to Saurish!</strong> Check your inbox for replies at ${email}.`;
+          statusBox.innerHTML = `<strong>✓ Message sent to Saurish!</strong> A confirmation copy has also been sent to your email (<code>${email}</code>).`;
         }
-        showToast(`Message sent directly to saurish.perumalla@gmail.com!`, 4000);
+        showToast(`Message sent & confirmation delivered to ${email}!`, 4500);
         form.reset();
 
         if (btnText) btnText.textContent = 'Message Sent!';
