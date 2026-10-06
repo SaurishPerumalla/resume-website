@@ -129,13 +129,16 @@ function initCopyButtons() {
    ========================================================================== */
 function initContactForm() {
   const form = document.getElementById('contact-form');
+  const submitBtn = document.getElementById('contact-submit-btn');
+  const statusBox = document.getElementById('form-status');
   if (!form) return;
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const name = document.getElementById('contact-name').value.trim();
     const email = document.getElementById('contact-email').value.trim();
-    const subject = document.getElementById('contact-subject').value.trim();
+    const subject = document.getElementById('contact-subject').value.trim() || 'Website Inquiry';
     const message = document.getElementById('contact-message').value.trim();
 
     if (!name || !email || !message) {
@@ -143,16 +146,77 @@ function initContactForm() {
       return;
     }
 
-    // Trigger local client feedback
-    showToast(`Thank you, ${name}! Generating your message...`);
+    // Set UI to loading state
+    const btnText = submitBtn ? submitBtn.querySelector('.btn-text') : null;
+    const btnIcon = submitBtn ? submitBtn.querySelector('.btn-icon') : null;
+    const spinner = submitBtn ? submitBtn.querySelector('.spinner') : null;
 
-    // Prepare mailto fallback
-    const mailtoLink = `mailto:saurish.perumalla@gmail.com?subject=${encodeURIComponent(subject || 'Website Inquiry')}&body=${encodeURIComponent(`From: ${name} (${email})\n\n${message}`)}`;
-    
-    setTimeout(() => {
+    if (btnText) btnText.textContent = 'Sending message...';
+    if (btnIcon) btnIcon.style.display = 'none';
+    if (spinner) spinner.style.display = 'inline-block';
+    if (submitBtn) submitBtn.disabled = true;
+
+    if (statusBox) {
+      statusBox.style.display = 'none';
+      statusBox.className = 'form-status';
+    }
+
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/saurish.perumalla@gmail.com', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          _subject: `New Resume Inquiry: ${subject} (from ${name})`,
+          message: message,
+          _template: 'table',
+          _captcha: 'false'
+        })
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok || result.success === 'true' || result.success === true) {
+        // Message sent successfully
+        if (statusBox) {
+          statusBox.style.display = 'block';
+          statusBox.className = 'form-status success';
+          statusBox.innerHTML = `<strong>✓ Message sent directly to Saurish!</strong> Check your inbox for replies at ${email}.`;
+        }
+        showToast(`Message sent directly to saurish.perumalla@gmail.com!`, 4000);
+        form.reset();
+
+        if (btnText) btnText.textContent = 'Message Sent!';
+        setTimeout(() => {
+          if (btnText) btnText.textContent = 'Send Message';
+          if (btnIcon) btnIcon.style.display = 'inline-block';
+          if (spinner) spinner.style.display = 'none';
+          if (submitBtn) submitBtn.disabled = false;
+        }, 3500);
+      } else {
+        throw new Error(result.message || 'Submission failed');
+      }
+    } catch (err) {
+      console.warn('FormSubmit AJAX fallback triggered:', err);
+      if (statusBox) {
+        statusBox.style.display = 'block';
+        statusBox.className = 'form-status error';
+        statusBox.innerHTML = `⚠️ Direct delivery encountered an issue. <a href="mailto:saurish.perumalla@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`From: ${name} (${email})\n\n${message}`)}" style="text-decoration: underline; font-weight: 700;">Click here to send directly via email client</a>.`;
+      }
+      showToast('Opening email client fallback...', 4000);
+
+      const mailtoLink = `mailto:saurish.perumalla@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`From: ${name} (${email})\n\n${message}`)}`;
       window.location.href = mailtoLink;
-      form.reset();
-    }, 600);
+
+      if (btnText) btnText.textContent = 'Send Message';
+      if (btnIcon) btnIcon.style.display = 'inline-block';
+      if (spinner) spinner.style.display = 'none';
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 }
 

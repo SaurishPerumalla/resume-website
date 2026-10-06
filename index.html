@@ -617,7 +617,14 @@
         </div>
 
         <div class="contact-form-col card">
-          <form id="contact-form" class="contact-form">
+          <form id="contact-form" class="contact-form" action="https://formsubmit.co/saurish.perumalla@gmail.com" method="POST">
+            <!-- FormSubmit direct email configuration -->
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_template" value="table">
+            <input type="hidden" name="_subject" id="form-subject-hidden" value="New Message from Resume Website">
+            <!-- Honeypot anti-spam protection -->
+            <input type="text" name="_honey" style="display:none">
+
             <h3 class="form-title">Send a Quick Message</h3>
             
             <div class="form-group">
@@ -640,13 +647,20 @@
               <textarea id="contact-message" name="message" rows="4" required placeholder="Hi Saurish, I came across your resume website and would love to chat..."></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">
-              <span>Send Message</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <!-- In-page status message -->
+            <div id="form-status" class="form-status" style="display: none;" role="alert"></div>
+
+            <button type="submit" id="contact-submit-btn" class="btn btn-primary btn-block">
+              <span class="btn-text">Send Message</span>
+              <svg class="btn-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
+              <span class="spinner" style="display: none;"></span>
             </button>
+            <p class="form-disclaimer">
+              Sent directly to <a href="mailto:saurish.perumalla@gmail.com">saurish.perumalla@gmail.com</a>
+            </p>
           </form>
         </div>
       </div>
