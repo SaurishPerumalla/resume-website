@@ -2,6 +2,8 @@
 
 A modern, responsive, high-performance personal resume and portfolio website built directly from your resume.
 
+🔗 **Live Website**: [https://saurishperumalla.github.io/resume-website/](https://saurishperumalla.github.io/resume-website/)
+
 ## 🌟 Key Features
 
 - **Accurate Information & Structure**: Faithfully incorporates all content from your resume:
