@@ -18,6 +18,9 @@ A modern, responsive, high-performance personal resume and portfolio website bui
   - **Dark & Light Mode**: Smooth theme toggle with preference persistence in `localStorage`.
   - **Original Resume Modal**: Interactive preview of the exact layout of your original resume.
   - **Print / PDF Ready**: Dedicated `@media print` styles so pressing **"Print / PDF"** formats a clean ATS-friendly document with the signature royal blue header!
+  - **AI Chatbot ("Ask Saurish AI")**: An interactive assistant answering questions about Saurish's work experience, education, skills, and contact information:
+    - **Zero-Setup Mode**: Answers all resume questions out of the box using a built-in knowledge base.
+    - **API Key Settings Panel (⚙️)**: Users/interviewers can enter their **Google Gemini** or **OpenAI** API key to enable live generative LLM responses. Keys are stored locally in the browser (`localStorage`) and never exposed publicly.
 
 ---
 
