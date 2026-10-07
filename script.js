@@ -380,6 +380,8 @@ function initChatbot() {
   const settingsCloseBtn = document.getElementById('settings-close-btn');
 
   const providerSelect = document.getElementById('ai-provider-select');
+  const openrouterModelGroup = document.getElementById('openrouter-model-group');
+  const openrouterModelSelect = document.getElementById('openrouter-model-select');
   const apiKeyInput = document.getElementById('api-key-input');
   const toggleKeyBtn = document.getElementById('toggle-key-visibility');
   const saveKeyBtn = document.getElementById('save-api-key-btn');
@@ -395,11 +397,52 @@ function initChatbot() {
   if (!toggleBtn || !chatWindow) return;
 
   // Load saved API settings
-  const savedProvider = localStorage.getItem('sp-ai-provider') || 'gemini';
-  const savedKey = localStorage.getItem('sp-ai-key') || '';
+  let savedProvider = localStorage.getItem('sp-ai-provider') || 'openrouter';
+  const savedKey = (localStorage.getItem('sp-ai-key') || '').trim();
+  const savedModel = localStorage.getItem('sp-openrouter-model') || 'openai/gpt-4o-mini';
+
+  // Auto-detect OpenRouter key format
+  if (savedKey.startsWith('sk-or-')) {
+    savedProvider = 'openrouter';
+  }
 
   if (providerSelect) providerSelect.value = savedProvider;
+  if (openrouterModelSelect) openrouterModelSelect.value = savedModel;
   if (apiKeyInput) apiKeyInput.value = savedKey;
+
+  function updateProviderUI() {
+    const prov = providerSelect ? providerSelect.value : 'openrouter';
+    if (openrouterModelGroup) {
+      openrouterModelGroup.style.display = prov === 'openrouter' ? 'block' : 'none';
+    }
+    if (apiKeyInput) {
+      if (prov === 'openrouter') {
+        apiKeyInput.placeholder = 'sk-or-v1-... (OpenRouter API key)';
+      } else if (prov === 'gemini') {
+        apiKeyInput.placeholder = 'AIzaSy... (Gemini API key)';
+      } else {
+        apiKeyInput.placeholder = 'sk-... (OpenAI API key)';
+      }
+    }
+  }
+
+  if (providerSelect) {
+    providerSelect.addEventListener('change', updateProviderUI);
+  }
+  updateProviderUI();
+
+  // Key input listener to auto-detect OpenRouter keys
+  if (apiKeyInput) {
+    apiKeyInput.addEventListener('input', () => {
+      const val = apiKeyInput.value.trim();
+      if (val.startsWith('sk-or-') && providerSelect && providerSelect.value !== 'openrouter') {
+        providerSelect.value = 'openrouter';
+        updateProviderUI();
+        showToast('Detected OpenRouter API key format');
+      }
+    });
+  }
+
   updateKeyStatusDisplay(savedKey);
 
   // Toggle Chat Window
@@ -459,7 +502,13 @@ function initChatbot() {
   if (saveKeyBtn) {
     saveKeyBtn.addEventListener('click', () => {
       const keyVal = (apiKeyInput ? apiKeyInput.value.trim() : '');
-      const provVal = (providerSelect ? providerSelect.value : 'gemini');
+      let provVal = (providerSelect ? providerSelect.value : 'openrouter');
+      if (keyVal.startsWith('sk-or-')) {
+        provVal = 'openrouter';
+        if (providerSelect) providerSelect.value = 'openrouter';
+        updateProviderUI();
+      }
+      const modelVal = (openrouterModelSelect ? openrouterModelSelect.value : 'openai/gpt-4o-mini');
 
       if (!keyVal) {
         showToast('Please enter an API key first.');
@@ -468,8 +517,9 @@ function initChatbot() {
 
       localStorage.setItem('sp-ai-key', keyVal);
       localStorage.setItem('sp-ai-provider', provVal);
+      localStorage.setItem('sp-openrouter-model', modelVal);
       updateKeyStatusDisplay(keyVal);
-      showToast('API Key saved successfully!');
+      showToast(`API Key saved! Provider: ${provVal}`);
       if (settingsPanel) settingsPanel.style.display = 'none';
     });
   }
@@ -577,8 +627,13 @@ function initChatbot() {
    AI Response Generator (Live API or Knowledge Base)
    ========================================================================== */
 async function getAIResponse(userQuery) {
-  const apiKey = localStorage.getItem('sp-ai-key') || '';
-  const provider = localStorage.getItem('sp-ai-provider') || 'gemini';
+  const apiKey = (localStorage.getItem('sp-ai-key') || '').trim();
+  let provider = localStorage.getItem('sp-ai-provider') || 'openrouter';
+
+  // Automatically treat sk-or- keys as OpenRouter
+  if (apiKey.startsWith('sk-or-')) {
+    provider = 'openrouter';
+  }
 
   if (!apiKey) {
     // Artificial small delay for natural conversational feel
@@ -586,7 +641,36 @@ async function getAIResponse(userQuery) {
     return getKnowledgeBaseResponse(userQuery);
   }
 
-  if (provider === 'gemini') {
+  if (provider === 'openrouter' || apiKey.startsWith('sk-or-')) {
+    const model = localStorage.getItem('sp-openrouter-model') || 'openai/gpt-4o-mini';
+    const endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': window.location.href,
+        'X-Title': 'Saurish Perumalla Resume AI'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          { role: 'system', content: SAURISH_SYSTEM_PROMPT },
+          { role: 'user', content: userQuery }
+        ],
+        temperature: 0.7
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.error?.message || `OpenRouter HTTP ${res.status}`);
+    }
+
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) throw new Error('No response text returned from OpenRouter');
+    return text;
+  } else if (provider === 'gemini') {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -603,7 +687,7 @@ async function getAIResponse(userQuery) {
 
     const data = await res.json();
     if (!res.ok || data.error) {
-      throw new Error(data.error?.message || `HTTP ${res.status}`);
+      throw new Error(data.error?.message || `Gemini HTTP ${res.status}`);
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -629,7 +713,7 @@ async function getAIResponse(userQuery) {
 
     const data = await res.json();
     if (!res.ok || data.error) {
-      throw new Error(data.error?.message || `HTTP ${res.status}`);
+      throw new Error(data.error?.message || `OpenAI HTTP ${res.status}`);
     }
 
     const text = data.choices?.[0]?.message?.content;

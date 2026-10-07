@@ -876,14 +876,25 @@
           <div class="settings-form-group">
             <label for="ai-provider-select">AI Provider</label>
             <select id="ai-provider-select" class="settings-select">
-              <option value="gemini">Google Gemini (Recommended & Free tier)</option>
-              <option value="openai">OpenAI (GPT-4o mini)</option>
+              <option value="openrouter" selected>OpenRouter (openrouter.ai)</option>
+              <option value="gemini">Google Gemini API</option>
+              <option value="openai">OpenAI API</option>
+            </select>
+          </div>
+          <div class="settings-form-group" id="openrouter-model-group">
+            <label for="openrouter-model-select">OpenRouter Model</label>
+            <select id="openrouter-model-select" class="settings-select">
+              <option value="openai/gpt-4o-mini" selected>OpenAI GPT-4o mini (Fast & Recommended)</option>
+              <option value="google/gemini-2.0-flash-lite:free">Google Gemini 2.0 Flash Lite (Free on OpenRouter)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">Meta Llama 3.3 70B (Free on OpenRouter)</option>
+              <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+              <option value="anthropic/claude-3.5-haiku">Claude 3.5 Haiku</option>
             </select>
           </div>
           <div class="settings-form-group">
             <label for="api-key-input">API Key</label>
             <div class="api-key-input-wrapper">
-              <input type="password" id="api-key-input" class="settings-input" placeholder="Enter API Key (AIzaSy... or sk-...)">
+              <input type="password" id="api-key-input" class="settings-input" placeholder="sk-or-v1-... (OpenRouter API key)">
               <button id="toggle-key-visibility" class="key-vis-btn" type="button" title="Toggle Visibility">👁️</button>
             </div>
             <div id="key-status-msg" class="key-status-msg"></div>
